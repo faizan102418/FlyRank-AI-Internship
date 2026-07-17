@@ -48,4 +48,4 @@ Content-Type: application/json
 {"detail":"Title cannot be empty"}
 
 
-![Swagger UI Documentation Screenshot](swagger_docs.png)
+![Swagger UI web page showing FastAPI documentation header with badges 0.1.0 and OAS 3.1. Main panel lists API endpoints in collapsible colored boxes: GET /tasks Read Tasks, POST /tasks Create Task, GET / Read Root, GET /health Read Health, GET /tasks/{id} Read Task, PUT /tasks/{id} Update Task. Browser address bar shows localhost:8000/docs. The page has a white background and a neutral professional tone.](swagger_docs.png)
