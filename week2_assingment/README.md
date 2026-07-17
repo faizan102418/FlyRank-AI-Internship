@@ -1,4 +1,4 @@
-# Task Management API (yRank AI Internship - Week 2)
+# Task Management API (FlyRank AI Internship - Week 2)
 
 A robust, lightweight Task Management RESTful API built with **FastAPI** and run via **Uvicorn**. This project implements full CRUD (Create, Read, Update, Delete) functionality with robust, custom input validation to handle tricky edge cases.
 
