@@ -22,6 +22,8 @@ A robust, lightweight Task Management RESTful API built with **FastAPI** and run
 
 ---
 
+![Swagger UI Documentation Screenshot](swagger_docs.png)
+
 ## Installation & Setup
 
 Follow these quick steps to get the API running locally on your machine.
@@ -43,3 +45,4 @@ source venv/bin/activate
 pip install fastapi uvicorn
 
 uvicorn main:app --reload
+
