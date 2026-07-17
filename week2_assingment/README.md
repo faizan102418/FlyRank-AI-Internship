@@ -46,3 +46,6 @@ Response:JSONHTTP/1.1 400 Bad Request
 Content-Type: application/json
 
 {"detail":"Title cannot be empty"}
+
+
+![Swagger UI Documentation Screenshot](swagger_docs.png)
