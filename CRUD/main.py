@@ -46,11 +46,6 @@ class TaskUpdate(BaseModel):
 
 app = FastAPI()
 
-tasks = [
-    {"id": 1, "title": "Buy milk", "done": False},
-    {"id": 2, "title": "Complete Stage 2", "done": True},
-    {"id": 3, "title": "Commit to Git", "done": False},
-]
 
 @app.post("/tasks", status_code=201)
 def create_task(task_input: TaskCreate):
