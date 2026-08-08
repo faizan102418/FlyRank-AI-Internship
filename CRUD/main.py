@@ -89,21 +89,27 @@ def read_health():
 @app.get("/tasks")
 def read_tasks():
     """
-    Retrieve the entire list of tasks currently stored in memory.
+    Retrieve the entire list of tasks from the database.
     """
-    return tasks
+    conn = get_conn()
+    rows = conn.execute("SELECT * FROM tasks").fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 
 @app.get("/tasks/{id}")
-def read_task(id:int):
+def read_task(id: int):
     """
     Look up and retrieve a single task using its unique integer ID.
     Raises a 404 error if the task is not found.
     """
-    for task in tasks:
-        if task["id"] == id:
-            return task
-    return {"error": "Task not found"}
+    conn = get_conn()
+    row = conn.execute("SELECT * FROM tasks WHERE id = ?", (id,)).fetchone()
+    conn.close()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return dict(row)
+
 
 
 
