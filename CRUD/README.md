@@ -46,3 +46,6 @@ pip install fastapi uvicorn
 
 uvicorn main:app --reload
 
+
+
+SELECT COUNT(*) FROM tasks; returned 3, confirming the seed only ran once.
