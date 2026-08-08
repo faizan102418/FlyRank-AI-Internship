@@ -23,7 +23,7 @@ A robust, lightweight Task Management RESTful API built with **FastAPI** and run
 ---
 
 ![Swagger UI Documentation Screenshot](swagger_docs.png)
-
+![DB Browser Screenshot](db_browser.png)
 ## Installation & Setup
 
 Follow these quick steps to get the API running locally on your machine.
@@ -48,4 +48,17 @@ uvicorn main:app --reload
 
 
 
-SELECT COUNT(*) FROM tasks; returned 3, confirming the seed only ran once.
+## Database
+
+This project stores tasks in **SQLite** instead of an in-memory list.
+
+**Why SQLite:** no server to install or configure — the whole database
+is a single file (`tasks.db`). It's created automatically the first time
+the app runs, and data survives a server restart, which an in-memory list
+cannot do.
+
+**Where it lives:** `tasks.db`, created automatically in the project root.
+It's git-ignored, so a fresh clone starts with no database file — the app
+creates it and seeds three example tasks on first run.
+
+**Run it:**
