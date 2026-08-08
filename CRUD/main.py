@@ -47,24 +47,6 @@ class TaskUpdate(BaseModel):
 app = FastAPI()
 
 
-@app.post("/tasks", status_code=201)
-def create_task(task_input: TaskCreate):
-    """
-    Create a new task with an auto-generated ID and default status set to incomplete.
-    Raises a 400 error if the title is empty.
-    """
-    
-    if not task_input.title or task_input.title.strip() == "":
-        raise HTTPException(status_code=400, detail="Title cannot be empty")
-    if task_input.title in [task["title"] for task in tasks]:
-        raise HTTPException(status_code=400, detail="Task with this title already exists")
-    else:
-        task_id = len(tasks) + 1
-        new_task = {"id": task_id, "title": task_input.title, "done": False}
-        tasks.append(new_task)
-        return new_task
-
-
 
 @app.get("/")
 def read_root():
@@ -109,6 +91,35 @@ def read_task(id: int):
     if row is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return dict(row)
+
+
+@app.post("/tasks", status_code=201)
+def create_task(task_input: TaskCreate):
+    """
+    Create a new task with an auto-generated ID and default status set to incomplete.
+    Raises a 400 error if the title is empty or already exists.
+    """
+    if not task_input.title or task_input.title.strip() == "":
+        raise HTTPException(status_code=400, detail="Title cannot be empty")
+
+    conn = get_conn()
+    existing = conn.execute(
+        "SELECT 1 FROM tasks WHERE title = ?", (task_input.title,)
+    ).fetchone()
+    if existing:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Task with this title already exists")
+
+    cur = conn.execute(
+        "INSERT INTO tasks (title, done) VALUES (?, ?)",
+        (task_input.title, 0)
+    )
+    conn.commit()
+    new_id = cur.lastrowid
+    conn.close()
+
+    return {"id": new_id, "title": task_input.title, "done": False}
+
 
 
 
