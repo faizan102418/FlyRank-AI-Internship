@@ -45,7 +45,8 @@ source venv/bin/activate
 pip install fastapi uvicorn
 
 uvicorn main:app --reload
-```bash
+
+```
 
 
 ## Database
