@@ -23,7 +23,7 @@ A robust, lightweight Task Management RESTful API built with **FastAPI** and run
 ---
 
 ![Swagger UI Documentation Screenshot](swagger_docs.png)
-![DB Browser Screenshot](db_browser.png)
+
 ## Installation & Setup
 
 Follow these quick steps to get the API running locally on your machine.
@@ -63,3 +63,4 @@ It's git-ignored, so a fresh clone starts with no database file — the app
 creates it and seeds three example tasks on first run.
 
 **Run it:**
+![DB Browser Screenshot](db_browser.png)
