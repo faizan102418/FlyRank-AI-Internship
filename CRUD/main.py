@@ -81,9 +81,12 @@ def read_tasks():
     Retrieve the entire list of tasks from the database.
     """
     conn = get_conn()
-    rows = conn.execute("SELECT * FROM tasks").fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM tasks")
+    rows = cur.fetchall()
+    cur.close()
     conn.close()
-    return [dict(row) for row in rows]
+    return rows
 
 
 @app.get("/tasks/{id}")
@@ -93,12 +96,14 @@ def read_task(id: int):
     Raises a 404 error if the task is not found.
     """
     conn = get_conn()
-    row = conn.execute("SELECT * FROM tasks WHERE id = ?", (id,)).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM tasks WHERE id = %s", (id,))
+    row = cur.fetchone()
+    cur.close()
     conn.close()
     if row is None:
         raise HTTPException(status_code=404, detail="Task not found")
-    return dict(row)
-
+    return row
 
 @app.post("/tasks", status_code=201)
 def create_task(task_input: TaskCreate):
