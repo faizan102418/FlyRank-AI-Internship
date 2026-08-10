@@ -2,35 +2,42 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 
-import sqlite3
+import os
+import psycopg
+from psycopg.rows import dict_row
+from dotenv import load_dotenv
 
-DB_PATH = "tasks.db"
+load_dotenv()
+
+
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # lets you access columns by name
-    return conn
+    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+
 
 def init_db():
     conn = get_conn()
-    conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             title TEXT NOT NULL,
-            done INTEGER NOT NULL DEFAULT 0
+            done BOOLEAN NOT NULL DEFAULT FALSE
         )
     """)
-    count = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM tasks")
+    count = cur.fetchone()["count"]
     if count == 0:
-        conn.executemany(
-            "INSERT INTO tasks (title, done) VALUES (?, ?)",
-            [("Buy milk", 0), ("Complete Stage 2", 1), ("Commit to Git", 0)]
+        cur.executemany(
+            "INSERT INTO tasks (title, done) VALUES (%s, %s)",
+            [("Buy milk", False), ("Complete Stage 2", True), ("Commit to Git", False)]
         )
-        conn.commit()
+    conn.commit()
+    cur.close()
     conn.close()
 
 init_db()
-
 
 
 
