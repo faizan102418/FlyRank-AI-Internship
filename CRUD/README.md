@@ -64,3 +64,38 @@ creates it and seeds three example tasks on first run.
 
 **Run it:**
 ![DB Browser Screenshot](db_browser.png)
+
+
+
+## Running with Docker Compose
+
+This project runs the API and a PostgreSQL database as two containers,
+started together with a single command.
+
+**Setup:**
+1. Copy `.env.example` to `.env`
+2. Run:
+
+
+The API will be available at `http://localhost:8000`. Postgres data
+persists in a named Docker volume (`taskdata`), so it survives
+`docker compose down` and `docker compose up` cycles.
+
+docker compose up
+
+## Endpoints
+
+| Method | Path          | Description          |
+|--------|---------------|-----------------------|
+| GET    | /tasks        | List all tasks        |
+| GET    | /tasks/{id}   | Get one task          |
+| POST   | /tasks        | Create a task          |
+| PUT    | /tasks/{id}   | Update a task          |
+| DELETE | /tasks/{id}   | Delete a task          |
+
+**Example:**
+
+curl -i http://localhost:8000/tasks
+
+HTTP/1.1 200 OK
+[{"id":1,"title":"Buy milk","done":false}, ...]
