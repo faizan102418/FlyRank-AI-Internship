@@ -99,3 +99,7 @@ curl -i http://localhost:8000/tasks
 
 HTTP/1.1 200 OK
 [{"id":1,"title":"Buy milk","done":false}, ...]
+
+## Database screenshot
+
+![Postgres data in psql](postgres_data.png)
