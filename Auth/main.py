@@ -1,5 +1,5 @@
 def main():
-    print("Hello from flyrank-ai-internship!")
+    print("Hello from auth!")
 
 
 if __name__ == "__main__":
