@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 from supabase import create_client, Client
 
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 load_dotenv()
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
@@ -76,13 +78,10 @@ def public_info():
     )
 
 
-def get_current_user(request: Request) -> dict:
-    auth_header = request.headers.get("Authorization")
+bearer_scheme = HTTPBearer()
 
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Access token required")
-
-    token = auth_header.removeprefix("Bearer ").strip()
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> dict:
+    token = credentials.credentials
 
     if not token:
         raise HTTPException(status_code=401, detail="Access token required")
@@ -96,7 +95,6 @@ def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     return {"user": result.user, "token": token}
-
 
 @app.get("/protected/profile")
 def protected_profile(current=Depends(get_current_user)):
