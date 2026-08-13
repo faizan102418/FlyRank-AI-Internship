@@ -2,8 +2,8 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 from supabase import create_client, Client
 
@@ -66,3 +66,65 @@ def login(credentials: AuthCredentials):
             "refresh_token": result.session.refresh_token,
         },
     )
+
+
+@app.get("/public/info")
+def public_info():
+    return JSONResponse(
+        status_code=200,
+        content={"message": "Welcome stranger! This info is public."},
+    )
+
+
+def get_current_user(request: Request) -> dict:
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Access token required")
+
+    token = auth_header.removeprefix("Bearer ").strip()
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Access token required")
+
+    try:
+        result = supabase.auth.get_user(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    if not result or not result.user:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    return {"user": result.user, "token": token}
+
+
+@app.get("/protected/profile")
+def protected_profile(current=Depends(get_current_user)):
+    user = current["user"]
+    return JSONResponse(
+        status_code=200,
+        content={
+            "id": user.id,
+            "email": user.email,
+            "created_at": user.created_at.isoformat() if hasattr(user.created_at, "isoformat") else str(user.created_at),
+        },
+    )
+
+
+@app.get("/protected/dashboard")
+def protected_dashboard(current=Depends(get_current_user)):
+    user = current["user"]
+    return JSONResponse(
+        status_code=200,
+        content={"message": f"Welcome to your dashboard, {user.email}"},
+    )
+
+
+@app.post("/auth/logout")
+def logout(current=Depends(get_current_user)):
+    try:
+        supabase.auth.sign_out()
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+
+    return Response(status_code=204)
