@@ -1,3 +1,5 @@
+import json
+import re
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -5,10 +7,12 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
+from pydantic import BaseModel, ValidationError, field_validator
 
 USER_AGENT = "FlyRankInternshipA9/1.0 (+https://github.com/faizan102418/FlyRank-AI-Internship)"
 TIMEOUT = 10  # seconds
 CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
+OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
 START_URL = "https://books.toscrape.com/catalogue/page-1.html"
 MAX_CATALOGUE_PAGES = 3
 REQUEST_DELAY = 0.5  # seconds, only applies to real requests, not cache hits
@@ -114,6 +118,49 @@ def extract_book_record(book_url: str, source_page: str) -> dict:
     }
 
 
+class BookRecord(BaseModel):
+    """The finished, validated shape of a book record."""
+    title: str
+    product_url: str
+    price_gbp: float
+    price_text: str
+    availability_text: str
+    rating_text: str | None
+    description: str | None
+    source_page: str
+    fetched_at: str
+
+    @field_validator("product_url", "source_page")
+    @classmethod
+    def must_be_absolute(cls, v: str) -> str:
+        if not v.startswith("https://"):
+            raise ValueError(f"URL is not absolute: {v}")
+        return v
+
+
+def parse_price_gbp(price_text: str) -> float:
+    """Turn '£51.77' into 51.77. Raises ValueError if no number is found."""
+    match = re.search(r"[\d.]+", price_text)
+    if not match:
+        raise ValueError(f"Could not parse a price from: {price_text!r}")
+    return float(match.group())
+
+
+def normalize_and_validate(raw_record: dict) -> tuple[dict | None, dict | None]:
+    """Returns (valid_record_dict, None) on success, or (None, error_dict) on failure."""
+    try:
+        price_gbp = parse_price_gbp(raw_record["price_text"])
+        candidate = {**raw_record, "price_gbp": price_gbp}
+        validated = BookRecord(**candidate)
+        return validated.model_dump(), None
+    except (ValidationError, ValueError, KeyError) as e:
+        error = {
+            "product_url": raw_record.get("product_url", "unknown"),
+            "reason": str(e),
+        }
+        return None, error
+
+
 def main():
     catalogue_pages, book_entries = discover_catalogue_pages_and_books()
     unique_entries = dedupe_book_entries(book_entries)
@@ -122,14 +169,31 @@ def main():
     print(f"discovered={len(book_entries)}")
     print(f"unique_urls={len(unique_entries)}")
 
-    records = []
+    raw_records = []
     for book_url, source_page in unique_entries:
-        record = extract_book_record(book_url, source_page)
-        records.append(record)
+        raw_records.append(extract_book_record(book_url, source_page))
 
-    print(f"detail_pages={len(records)}")
-    print("\nSample record:")
-    print(records[0])
+    print(f"detail_pages={len(raw_records)}")
+
+    valid_records = []
+    errors = []
+    for raw in raw_records:
+        record, error = normalize_and_validate(raw)
+        if record:
+            valid_records.append(record)
+        else:
+            errors.append(error)
+
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
+    with open(OUTPUT_DIR / "books.json", "w", encoding="utf-8") as f:
+        json.dump(valid_records, f, indent=2, ensure_ascii=False)
+
+    with open(OUTPUT_DIR / "errors.json", "w", encoding="utf-8") as f:
+        json.dump(errors, f, indent=2, ensure_ascii=False)
+
+    print(f"valid_records={len(valid_records)}")
+    print(f"invalid_records={len(errors)}")
 
 
 if __name__ == "__main__":
